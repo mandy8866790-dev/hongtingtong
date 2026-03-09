@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>红听筒纪事 - The Red Receiver</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 1. 设计系统 --- */
+        :root {
+            --bg-deep: #050505;
+            --accent-gold: #E5D1A2;
+            --font-main: 'Inter', system-ui, sans-serif;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-deep);
+            color: #ffffff;
+            font-family: var(--font-main);
+            height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- 2. 视觉纹理 --- */
+        .noise {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0.04; pointer-events: none; z-index: 1;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* --- 3. 标题层 (关键修改：全屏可点) --- */
+        .idle-layer {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; /* 铺满全屏 */
+            z-index: 100; /* 最顶层，确保能点到 */
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: rgba(5,5,5,0.8); /* 稍微加深一点背景，突出文字 */
+            transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            cursor: pointer; /* 鼠标变手型，提示可点击 */
+        }
+        
+        .idle-layer.hidden {
+            opacity: 0; 
+            pointer-events: none; /* 隐藏后让点击穿透到底层 */
+            transform: scale(1.05);
+        }
+
+        .brand-title {
+            font-weight: 200; font-size: 3.5rem; letter-spacing: 0.5em;
+            margin: 0; margin-left: 0.5em; 
+            color: rgba(255,255,255,0.9);
+            text-shadow: 0 0 30px rgba(255,255,255,0.1);
+        }
+        
+        .brand-subtitle {
+            margin-top: 1.5rem; font-size: 0.75rem; font-weight: 400;
+            letter-spacing: 4px; text-transform: uppercase;
+            color: var(--accent-gold); border-bottom: 1px solid rgba(229, 209, 162, 0.4);
+            padding-bottom: 5px; display: inline-block;
+        }
+        
+        /* 增加一个“点击开始”的微弱提示 */
+        .tap-hint {
+            position: absolute; bottom: 50px;
+            font-size: 0.7rem; color: rgba(255,255,255,0.3);
+            letter-spacing: 2px; text-transform: uppercase;
+            animation: pulse 2s infinite;
+        }
+
+        /* --- 4. 视频容器 --- */
+        .video-container {
+            width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0;
+            z-index: 2; opacity: 0; transition: opacity 1s ease;
+            background: #000;
+        }
+        .video-container.active { opacity: 1; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+
+        /* --- 5. 状态提示层 --- */
+        .status-overlay {
+            position: absolute; top: 20px; right: 30px;
+            z-index: 10;
+            display: flex; align-items: center; gap: 10px;
+            opacity: 0; transition: opacity 0.5s;
+        }
+        .status-overlay.show { opacity: 1; }
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background-color: #555; box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+        .status-text {
+            font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase;
+            color: rgba(255,255,255,0.6);
+        }
+        .status-overlay.playing .status-dot {
+            background-color: var(--accent-gold);
+            box-shadow: 0 0 10px var(--accent-gold);
+            animation: pulse-dot 2s infinite;
+        }
+        .status-overlay.playing .status-text { color: var(--accent-gold); }
+
+        /* --- NFC 连接状态指示灯 --- */
+        .nfc-indicator {
+            position: fixed; bottom: 20px; left: 20px;
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #333; z-index: 100;
+            transition: background 0.3s;
+        }
+        .nfc-indicator.connected { background: #2ecc71; box-shadow: 0 0 10px #2ecc71; }
+
+        /* --- 6. 底部 Dock --- */
+        .dock-capsule {
+            position: fixed; bottom: 40px; z-index: 50;
+            display: flex; gap: 12px; padding: 12px;
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: 20px; backdrop-filter: blur(20px);
+            /* 初始隐藏，进入后显示 */
+            opacity: 0; transform: translateY(20px);
+            transition: all 0.8s ease;
+        }
+        .dock-capsule.visible {
+            opacity: 1; transform: translateY(0);
+        }
+        
+        .card-btn {
+            width: 60px; height: 90px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: #111;
+            cursor: pointer; transition: all 0.4s ease;
+            position: relative; overflow: hidden;
+            padding: 0;
+            pointer-events: auto;
+        }
+        .card-btn img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: grayscale(100%) brightness(0.7);
+            transition: all 0.4s ease;
+        }
+        .card-btn:hover img, .card-btn.active img {
+            filter: grayscale(0%) brightness(1);
+            transform: scale(1.05);
+        }
+        .card-btn.active {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 20px rgba(229, 209, 162, 0.2);
+            transform: translateY(-5px);
+        }
+
+        /* --- 7. 硬件模拟 (听筒) --- */
+        .hw-panel {
+            position: fixed; right: 40px; top: 50%;
+            transform: translateY(-50%); z-index: 60;
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
+            opacity: 0; pointer-events: none; transition: opacity 0.6s ease;
+        }
+        .hw-panel.visible { opacity: 1; pointer-events: auto; }
+
+        .receiver-btn {
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 24px; cursor: pointer;
+            transition: all 0.3s; color: #666;
+        }
+        .receiver-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .receiver-btn.active {
+            background: var(--accent-gold); color: #000;
+            box-shadow: 0 0 20px rgba(229, 209, 162, 0.4);
+            transform: scale(1.1);
+        }
+        .hw-label {
+            writing-mode: vertical-rl; text-orientation: mixed;
+            font-size: 10px; letter-spacing: 3px;
+            color: rgba(255,255,255,0.3); text-transform: uppercase;
+        }
+
+        .fs-btn {
+            position: fixed; top: 30px; left: 30px;
+            background: none; border: none; color: rgba(255,255,255,0.3);
+            font-size: 1.2rem; cursor: pointer; z-index: 110;
+        }
+
+        @keyframes pulse { 0% { opacity: 0.2; } 50% { opacity: 0.6; } 100% { opacity: 0.2; } }
+        @keyframes pulse-dot { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+    </style>
+</head>
+<body>
+
+    <div class="noise"></div>
+    <button class="fs-btn" onclick="toggleFS()">⛶</button>
+    <div class="nfc-indicator" id="nfc-status"></div>
+
+    <div class="idle-layer" id="idle" onclick="startExperience()">
+        <h1 class="brand-title">红听筒纪事</h1>
+        <div class="brand-subtitle">The Red Receiver Chronicles</div>
+        <div class="tap-hint">Tap Anywhere to Enter</div>
+    </div>
+
+    <div class="video-container" id="vid-cont">
+        <video id="player" playsinline>
+            <source src="" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="status-overlay" id="status-ui">
+        <div class="status-dot"></div>
+        <div class="status-text" id="status-text">Preview Mode</div>
+    </div>
+
+    <div class="dock-capsule" id="dock"></div>
+
+    <div class="hw-panel" id="hw-panel">
+        <span class="hw-label">Receiver</span>
+        <div class="receiver-btn" id="rec-btn" onclick="toggleReceiver()" title="点击切换听筒状态">
+            📞
+        </div>
+        <span class="hw-label">Control</span>
+    </div>
+
+    <script>
+        // ================= 配置区 =================
+        const cardMapping = {
+            "0499BB02CD2A81": 1,
+            "0484C900CD2A81": 2,
+            "04A16D0ECC2A81": 3,
+            "0467B40FCC2A81": 4,
+            "04B2260FCC2A81": 5
+        };
+
+        const stories = [
+            { id: 1, cover: "images/01.jpg", demo: "videos/demo/demo01.mp4", full: "videos/movie/movie 1.mp4" },
+            { id: 2, cover: "images/02.jpg", demo: "videos/demo/demo02.mp4", full: "videos/movie/movie 2.mp4" },
+            { id: 3, cover: "images/03.jpg", demo: "videos/demo/demo03.mp4", full: "videos/movie/movie 3.mp4" },
+            { id: 4, cover: "images/04.jpg", demo: "videos/demo/demo04.mp4", full: "videos/movie/movie 4.mp4" },
+            { id: 5, cover: "images/05.jpg", demo: "videos/demo/demo05.mp4", full: "videos/movie/movie 5.mp4" }
+        ];
+        // ===========================================
+
+        let player, vidCont, idle, dock, recBtn, hwPanel, statusUI, statusText, nfcStatus;
+        let currentStoryIndex = -1;
+        let isCardMode = false;
+        let isReceiverLifted = false;
+        let hasStarted = false; // 标记是否已进入系统
+
+        document.addEventListener('DOMContentLoaded', () => {
+            player = document.getElementById('player');
+            vidCont = document.getElementById('vid-cont');
+            idle = document.getElementById('idle');
+            dock = document.getElementById('dock');
+            recBtn = document.getElementById('rec-btn');
+            hwPanel = document.getElementById('hw-panel');
+            statusUI = document.getElementById('status-ui');
+            statusText = document.getElementById('status-text');
+            nfcStatus = document.getElementById('nfc-status');
+
+            initDock();
+            connectWebSocket();
+        });
+
+        // --- 核心：点击屏幕任意位置开始 ---
+        function startExperience() {
+            if(hasStarted) return; // 防止重复触发
+            hasStarted = true;
+
+            console.log("点击标题：进入系统");
+            
+            // 1. 隐藏标题
+            idle.classList.add('hidden');
+            // 2. 显示 Dock (按钮栏)
+            dock.classList.add('visible');
+            // 3. 播放第一个 demo
+            manualSelect(0);
+        }
+
+        // --- WebSocket ---
+        function connectWebSocket() {
+            try {
+                const socket = new WebSocket('ws://localhost:8765');
+                socket.onopen = () => { console.log("NFC Connected"); if(nfcStatus) nfcStatus.classList.add('connected'); };
+                socket.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'card_tap') handleCardTap(data.uid);
+                    } catch(e) {}
+                };
+                socket.onclose = () => { if(nfcStatus) nfcStatus.classList.remove('connected'); setTimeout(connectWebSocket, 3000); };
+                socket.onerror = () => { socket.close(); };
+            } catch (err) {}
+        }
+
+        function handleCardTap(uid) {
+            // 如果还没进入系统，刷卡也自动进入
+            if(!hasStarted) startExperience();
+
+            const storyId = cardMapping[uid];
+            if (storyId) {
+                console.log("NFC Trigger: Story " + storyId);
+                currentStoryIndex = storyId - 1;
+                isCardMode = true;        
+                isReceiverLifted = false; 
+                updateUIAndPlay();
+            }
+        }
+
+        function manualSelect(index) {
+            console.log("Manual Select: Story " + (index + 1));
+            currentStoryIndex = index;
+            isCardMode = false;       
+            isReceiverLifted = false; 
+            updateUIAndPlay();
+        }
+
+        function updateUIAndPlay() {
+            if (currentStoryIndex === -1 || !stories[currentStoryIndex]) return;
+            const story = stories[currentStoryIndex];
+
+            // UI 更新
+            const btns = document.querySelectorAll('.card-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            if(btns[currentStoryIndex]) btns[currentStoryIndex].classList.add('active');
+
+            vidCont.classList.add('active');
+            statusUI.classList.add('show');
+
+            // 听筒显隐
+            if (isCardMode) hwPanel.classList.add('visible');
+            else hwPanel.classList.remove('visible');
+
+            // 状态计算
+            let targetSrc = "";
+            let targetLoop = false;
+            let targetMuted = true;
+            let targetStatusText = "";
+            let isPlayingMode = false;
+
+            if (isReceiverLifted) {
+                targetSrc = story.full;
+                targetLoop = false;
+                targetMuted = false;
+                targetStatusText = "Playing Record...";
+                isPlayingMode = true;
+                recBtn.classList.add('active');
+            } else if (isCardMode) {
+                targetSrc = story.full;
+                targetLoop = true;
+                targetMuted = true;
+                targetStatusText = "Ready to Play";
+                isPlayingMode = false;
+                recBtn.classList.remove('active');
+            } else {
+                targetSrc = story.demo;
+                targetLoop = true;
+                targetMuted = true;
+                targetStatusText = "Preview Mode";
+                isPlayingMode = false;
+                recBtn.classList.remove('active');
+            }
+
+            // 播放处理 (防空格路径问题)
+            const currentSrcDecoded = decodeURIComponent(player.src);
+            const targetSrcDecoded = targetSrc;
+            
+            // 只要文件名不同，就切换
+            // 使用 includes 判断，因为 player.src 是绝对路径
+            if (!currentSrcDecoded.includes(targetSrcDecoded)) {
+                console.log("切换源 -> " + targetSrc);
+                player.src = targetSrc;
+                player.play().catch(e => console.log("等待交互许可"));
+            } else {
+                // 源没变，确保在播放
+                if(player.paused) player.play().catch(e => {});
+            }
+
+            player.muted = targetMuted;
+            player.loop = targetLoop;
+
+            statusText.innerText = targetStatusText;
+            if (isPlayingMode) statusUI.classList.add('playing');
+            else statusUI.classList.remove('playing');
+        }
+
+        function initDock() {
+            if(!dock) return;
+            dock.innerHTML = '';
+            stories.forEach((story, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'card-btn';
+                btn.innerHTML = `<img src="${story.cover}" alt="${story.id}" onerror="this.style.display='none';this.parentNode.innerText='${story.id}'">`;
+                btn.onclick = (e) => {
+                    e.stopPropagation(); 
+                    manualSelect(index);
+                };
+                dock.appendChild(btn);
+            });
+        }
+
+        function toggleReceiver() {
+            if (!isCardMode) return;
+            isReceiverLifted = !isReceiverLifted;
+            updateUIAndPlay();
+        }
+
+        function toggleFS() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+    </script>
+</body>
+</html>

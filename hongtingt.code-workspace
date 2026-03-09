@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "videos"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "hongtingt"
+	}
+}
