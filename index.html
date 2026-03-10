@@ -37,21 +37,21 @@
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
-        /* --- 3. 标题层 (关键修改：全屏可点) --- */
+        /* --- 3. 标题层 --- */
         .idle-layer {
             position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%; /* 铺满全屏 */
-            z-index: 100; /* 最顶层，确保能点到 */
+            width: 100%; height: 100%; 
+            z-index: 100; 
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            background: rgba(5,5,5,0.8); /* 稍微加深一点背景，突出文字 */
+            background: rgba(5,5,5,0.8); 
             transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-            cursor: pointer; /* 鼠标变手型，提示可点击 */
+            cursor: pointer; 
         }
         
         .idle-layer.hidden {
             opacity: 0; 
-            pointer-events: none; /* 隐藏后让点击穿透到底层 */
+            pointer-events: none; 
             transform: scale(1.05);
         }
 
@@ -69,7 +69,6 @@
             padding-bottom: 5px; display: inline-block;
         }
         
-        /* 增加一个“点击开始”的微弱提示 */
         .tap-hint {
             position: absolute; bottom: 50px;
             font-size: 0.7rem; color: rgba(255,255,255,0.3);
@@ -125,12 +124,21 @@
             display: flex; gap: 12px; padding: 12px;
             background: var(--glass-bg); border: 1px solid var(--glass-border);
             border-radius: 20px; backdrop-filter: blur(20px);
-            /* 初始隐藏，进入后显示 */
             opacity: 0; transform: translateY(20px);
             transition: all 0.8s ease;
+            pointer-events: none; /* 初始状态不可点 */
         }
+        
         .dock-capsule.visible {
             opacity: 1; transform: translateY(0);
+            pointer-events: auto; /* 显示时可点 */
+        }
+
+        /* 新增：沉浸模式下自动隐藏时的 CSS 覆盖类 */
+        .dock-capsule.visible.dock-hidden {
+            opacity: 0; 
+            transform: translateY(20px);
+            pointer-events: none;
         }
         
         .card-btn {
@@ -256,7 +264,8 @@
         let currentStoryIndex = -1;
         let isCardMode = false;
         let isReceiverLifted = false;
-        let hasStarted = false; // 标记是否已进入系统
+        let hasStarted = false; 
+        let dockTimeout; // 新增：用于控制自动隐藏的计时器
 
         document.addEventListener('DOMContentLoaded', () => {
             player = document.getElementById('player');
@@ -271,24 +280,34 @@
 
             initDock();
             connectWebSocket();
+
+            // 新增：全局鼠标移动监听
+            document.addEventListener('mousemove', (e) => {
+                // 如果还没进入系统，或当前处于 Demo 模式，不执行自动隐藏逻辑
+                if (!hasStarted || !isCardMode) return;
+                
+                // 1. 鼠标只要一动，立刻清除计时器并显示 Dock
+                clearTimeout(dockTimeout);
+                dock.classList.remove('dock-hidden');
+                
+                // 2. 如果鼠标不在屏幕底部的 180px 热区内，则重新开启 2 秒倒计时
+                if (window.innerHeight - e.clientY > 180) {
+                    dockTimeout = setTimeout(() => {
+                        dock.classList.add('dock-hidden');
+                    }, 2000);
+                }
+            });
         });
 
-        // --- 核心：点击屏幕任意位置开始 ---
         function startExperience() {
-            if(hasStarted) return; // 防止重复触发
+            if(hasStarted) return; 
             hasStarted = true;
-
-            console.log("点击标题：进入系统");
             
-            // 1. 隐藏标题
             idle.classList.add('hidden');
-            // 2. 显示 Dock (按钮栏)
             dock.classList.add('visible');
-            // 3. 播放第一个 demo
             manualSelect(0);
         }
 
-        // --- WebSocket ---
         function connectWebSocket() {
             try {
                 const socket = new WebSocket('ws://localhost:8765');
@@ -305,12 +324,10 @@
         }
 
         function handleCardTap(uid) {
-            // 如果还没进入系统，刷卡也自动进入
             if(!hasStarted) startExperience();
 
             const storyId = cardMapping[uid];
             if (storyId) {
-                console.log("NFC Trigger: Story " + storyId);
                 currentStoryIndex = storyId - 1;
                 isCardMode = true;        
                 isReceiverLifted = false; 
@@ -319,11 +336,23 @@
         }
 
         function manualSelect(index) {
-            console.log("Manual Select: Story " + (index + 1));
             currentStoryIndex = index;
             isCardMode = false;       
             isReceiverLifted = false; 
             updateUIAndPlay();
+        }
+
+        // 新增：重置 Dock 隐藏计时器的封装函数
+        function resetDockTimer() {
+            if (!hasStarted) return;
+            clearTimeout(dockTimeout);
+            dock.classList.remove('dock-hidden');
+            
+            if (isCardMode) {
+                dockTimeout = setTimeout(() => {
+                    dock.classList.add('dock-hidden');
+                }, 2000);
+            }
         }
 
         function updateUIAndPlay() {
@@ -341,6 +370,9 @@
             // 听筒显隐
             if (isCardMode) hwPanel.classList.add('visible');
             else hwPanel.classList.remove('visible');
+
+            // --- 新增：调用 Dock 自动隐藏逻辑 ---
+            resetDockTimer();
 
             // 状态计算
             let targetSrc = "";
@@ -376,14 +408,10 @@
             const currentSrcDecoded = decodeURIComponent(player.src);
             const targetSrcDecoded = targetSrc;
             
-            // 只要文件名不同，就切换
-            // 使用 includes 判断，因为 player.src 是绝对路径
             if (!currentSrcDecoded.includes(targetSrcDecoded)) {
-                console.log("切换源 -> " + targetSrc);
                 player.src = targetSrc;
                 player.play().catch(e => console.log("等待交互许可"));
             } else {
-                // 源没变，确保在播放
                 if(player.paused) player.play().catch(e => {});
             }
 
