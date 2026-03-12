@@ -118,6 +118,48 @@
         }
         .nfc-indicator.connected { background: #2ecc71; box-shadow: 0 0 10px #2ecc71; }
 
+        /* --- 新增：影片简介弹出层 (Info Overlay) --- */
+        /* 1. 隐形点击热区：只在 Demo 模式激活，覆盖全屏用于触发简介 */
+        .click-zone {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 5; /* 盖在视频上面，但在 UI 下面 */
+            cursor: pointer;
+            display: none; 
+        }
+        
+        /* 2. 简介图片容器 */
+        .info-card {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            z-index: 40; /* 确保在视频和热区之上，但不会挡住 Dock(50) */
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            background: rgba(10, 10, 10, 0.85); /* 半透明黑底，凸显文字 */
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+            /* 响应式尺寸限制 */
+            max-width: 80%; max-height: 80vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        
+        .info-card.show {
+            opacity: 1;
+            pointer-events: auto; /* 出现后自身也可以被点击关闭 */
+            transform: translate(-50%, -50%) scale(1);
+            cursor: pointer;
+        }
+        
+        .info-card img {
+            max-width: 100%; max-height: calc(80vh - 30px);
+            object-fit: contain;
+            border-radius: 8px;
+            display: block;
+        }
+
         /* --- 6. 底部 Dock --- */
         .dock-capsule {
             position: fixed; bottom: 40px; z-index: 50;
@@ -126,15 +168,14 @@
             border-radius: 20px; backdrop-filter: blur(20px);
             opacity: 0; transform: translateY(20px);
             transition: all 0.8s ease;
-            pointer-events: none; /* 初始状态不可点 */
+            pointer-events: none; 
         }
         
         .dock-capsule.visible {
             opacity: 1; transform: translateY(0);
-            pointer-events: auto; /* 显示时可点 */
+            pointer-events: auto; 
         }
 
-        /* 新增：沉浸模式下自动隐藏时的 CSS 覆盖类 */
         .dock-capsule.visible.dock-hidden {
             opacity: 0; 
             transform: translateY(20px);
@@ -226,6 +267,12 @@
         </video>
     </div>
 
+    <div class="click-zone" id="click-zone" onclick="toggleInfo()"></div>
+
+    <div class="info-card" id="info-card" onclick="toggleInfo()">
+        <img id="info-img" src="" alt="Movie Information">
+    </div>
+
     <div class="status-overlay" id="status-ui">
         <div class="status-dot"></div>
         <div class="status-text" id="status-text">Preview Mode</div>
@@ -251,21 +298,25 @@
             "04B2260FCC2A81": 5
         };
 
+        // 新增 info 字段：填写每张卡对应的简介图片路径
         const stories = [
-            { id: 1, cover: "images/01.jpg", demo: "videos/demo/demo01.mp4", full: "videos/movie/movie 1.mp4" },
-            { id: 2, cover: "images/02.jpg", demo: "videos/demo/demo02.mp4", full: "videos/movie/movie 2.mp4" },
-            { id: 3, cover: "images/03.jpg", demo: "videos/demo/demo03.mp4", full: "videos/movie/movie 3.mp4" },
-            { id: 4, cover: "images/04.jpg", demo: "videos/demo/demo04.mp4", full: "videos/movie/movie 4.mp4" },
-            { id: 5, cover: "images/05.jpg", demo: "videos/demo/demo05.mp4", full: "videos/movie/movie 5.mp4" }
+            { id: 1, cover: "images/01.jpg", info: "images/info01.png", demo: "videos/demo/demo01.mp4", full: "videos/movie/movie 1.mp4" },
+            { id: 2, cover: "images/02.jpg", info: "images/info02.png", demo: "videos/demo/demo02.mp4", full: "videos/movie/movie 2.mp4" },
+            { id: 3, cover: "images/03.jpg", info: "images/info03.png", demo: "videos/demo/demo03.mp4", full: "videos/movie/movie 3.mp4" },
+            { id: 4, cover: "images/04.jpg", info: "images/info04.png", demo: "videos/demo/demo04.mp4", full: "videos/movie/movie 4.mp4" },
+            { id: 5, cover: "images/05.jpg", info: "images/info05.png", demo: "videos/demo/demo05.mp4", full: "videos/movie/movie 5.mp4" }
         ];
         // ===========================================
 
         let player, vidCont, idle, dock, recBtn, hwPanel, statusUI, statusText, nfcStatus;
+        let clickZone, infoCard, infoImg; // 新增变量
+        
         let currentStoryIndex = -1;
         let isCardMode = false;
         let isReceiverLifted = false;
         let hasStarted = false; 
-        let dockTimeout; // 新增：用于控制自动隐藏的计时器
+        let dockTimeout; 
+        let isInfoVisible = false; // 新增：记录简介是否显示
 
         document.addEventListener('DOMContentLoaded', () => {
             player = document.getElementById('player');
@@ -277,20 +328,21 @@
             statusUI = document.getElementById('status-ui');
             statusText = document.getElementById('status-text');
             nfcStatus = document.getElementById('nfc-status');
+            
+            clickZone = document.getElementById('click-zone');
+            infoCard = document.getElementById('info-card');
+            infoImg = document.getElementById('info-img');
 
             initDock();
             connectWebSocket();
 
-            // 新增：全局鼠标移动监听
+            // 全局鼠标移动监听 (Dock栏逻辑)
             document.addEventListener('mousemove', (e) => {
-                // 如果还没进入系统，或当前处于 Demo 模式，不执行自动隐藏逻辑
                 if (!hasStarted || !isCardMode) return;
                 
-                // 1. 鼠标只要一动，立刻清除计时器并显示 Dock
                 clearTimeout(dockTimeout);
                 dock.classList.remove('dock-hidden');
                 
-                // 2. 如果鼠标不在屏幕底部的 180px 热区内，则重新开启 2 秒倒计时
                 if (window.innerHeight - e.clientY > 180) {
                     dockTimeout = setTimeout(() => {
                         dock.classList.add('dock-hidden');
@@ -323,6 +375,18 @@
             } catch (err) {}
         }
 
+        // --- 新增：呼出/隐藏影片简介的逻辑 ---
+        function toggleInfo() {
+            if (isCardMode || currentStoryIndex === -1) return; // 只允许在 Demo 模式下生效
+
+            isInfoVisible = !isInfoVisible;
+            if (isInfoVisible) {
+                infoCard.classList.add('show');
+            } else {
+                infoCard.classList.remove('show');
+            }
+        }
+
         function handleCardTap(uid) {
             if(!hasStarted) startExperience();
 
@@ -342,7 +406,6 @@
             updateUIAndPlay();
         }
 
-        // 新增：重置 Dock 隐藏计时器的封装函数
         function resetDockTimer() {
             if (!hasStarted) return;
             clearTimeout(dockTimeout);
@@ -359,7 +422,7 @@
             if (currentStoryIndex === -1 || !stories[currentStoryIndex]) return;
             const story = stories[currentStoryIndex];
 
-            // UI 更新
+            // 1. UI 更新 (Dock按钮)
             const btns = document.querySelectorAll('.card-btn');
             btns.forEach(b => b.classList.remove('active'));
             if(btns[currentStoryIndex]) btns[currentStoryIndex].classList.add('active');
@@ -367,14 +430,28 @@
             vidCont.classList.add('active');
             statusUI.classList.add('show');
 
-            // 听筒显隐
+            // 2. 听筒显隐
             if (isCardMode) hwPanel.classList.add('visible');
             else hwPanel.classList.remove('visible');
 
-            // --- 新增：调用 Dock 自动隐藏逻辑 ---
+            // 3. --- 简介层逻辑 ---
+            // 每次切换视频/状态，重置并隐藏简介
+            isInfoVisible = false;
+            infoCard.classList.remove('show');
+            // 加载当前故事的简介图片 (如果图片找不到会隐藏，但这里我们相信有图)
+            infoImg.src = story.info || ""; 
+            
+            // 只有在 Demo 模式下，才激活全屏点击区
+            if (!isCardMode) {
+                clickZone.style.display = 'block';
+            } else {
+                clickZone.style.display = 'none';
+            }
+
+            // 4. Dock 隐藏逻辑
             resetDockTimer();
 
-            // 状态计算
+            // 5. 播放状态计算
             let targetSrc = "";
             let targetLoop = false;
             let targetMuted = true;
@@ -404,7 +481,7 @@
                 recBtn.classList.remove('active');
             }
 
-            // 播放处理 (防空格路径问题)
+            // 6. 播放处理
             const currentSrcDecoded = decodeURIComponent(player.src);
             const targetSrcDecoded = targetSrc;
             
