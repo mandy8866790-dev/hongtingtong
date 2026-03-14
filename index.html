@@ -118,17 +118,15 @@
         }
         .nfc-indicator.connected { background: #2ecc71; box-shadow: 0 0 10px #2ecc71; }
 
-        /* --- 新增：影片简介弹出层 (Info Overlay) --- */
-        /* 1. 隐形点击热区：只在 Demo 模式激活，覆盖全屏用于触发简介 */
+        /* --- 影片简介弹出层 (Info Overlay) --- */
         .click-zone {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 5; /* 盖在视频上面，但在 UI 下面 */
+            z-index: 5; 
             cursor: pointer;
             display: none; 
         }
         
-       /* 2. 简介图片容器 */
-       .info-card {
+        .info-card {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0.95);
@@ -137,22 +135,19 @@
             pointer-events: none;
             transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
             
-            /* --- 修改这里 --- */
-            background: none;       /* 将暗色半透明背景设为无 */
-            padding: 0;             /* 将内边距设为 0，使容器紧贴图片 */
-            border: none;           /* 将边框设为无 */
-            /* ---------------- */
+            /* 关键修改：去除背景、内边距和最关键的盒子阴影 */
+            background: none;
+            padding: 0;
+            border: none;
+            box-shadow: none; /* 彻底移除黑色光晕/阴影 */
             
-            border-radius: 12px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
-            /* 响应式尺寸限制 */
             max-width: 80%; max-height: 80vh;
             display: flex; justify-content: center; align-items: center;
         }
         
         .info-card.show {
             opacity: 1;
-            pointer-events: auto; /* 出现后自身也可以被点击关闭 */
+            pointer-events: auto; 
             transform: translate(-50%, -50%) scale(1);
             cursor: pointer;
         }
@@ -160,8 +155,9 @@
         .info-card img {
             max-width: 100%; max-height: calc(80vh - 30px);
             object-fit: contain;
-            border-radius: 8px;
+            border-radius: 16px; /* 匹配你PNG的圆角，防止硬边 */
             display: block;
+            /* 现在的图片直接飘在视频上，原汁原味显示你的 PNG */
         }
 
         /* --- 6. 底部 Dock --- */
@@ -302,7 +298,7 @@
             "04B2260FCC2A81": 5
         };
 
-        // 新增 info 字段：填写每张卡对应的简介图片路径
+        // 包含 info 层级路径的配置
         const stories = [
             { id: 1, cover: "images/01.jpg", info: "images/info/info01.png", demo: "videos/demo/demo01.mp4", full: "videos/movie/movie 1.mp4" },
             { id: 2, cover: "images/02.jpg", info: "images/info/info02.png", demo: "videos/demo/demo02.mp4", full: "videos/movie/movie 2.mp4" },
@@ -313,14 +309,14 @@
         // ===========================================
 
         let player, vidCont, idle, dock, recBtn, hwPanel, statusUI, statusText, nfcStatus;
-        let clickZone, infoCard, infoImg; // 新增变量
+        let clickZone, infoCard, infoImg;
         
         let currentStoryIndex = -1;
         let isCardMode = false;
         let isReceiverLifted = false;
         let hasStarted = false; 
         let dockTimeout; 
-        let isInfoVisible = false; // 新增：记录简介是否显示
+        let isInfoVisible = false;
 
         document.addEventListener('DOMContentLoaded', () => {
             player = document.getElementById('player');
@@ -340,7 +336,7 @@
             initDock();
             connectWebSocket();
 
-            // 全局鼠标移动监听 (Dock栏逻辑)
+            // 鼠标移动隐藏逻辑
             document.addEventListener('mousemove', (e) => {
                 if (!hasStarted || !isCardMode) return;
                 
@@ -379,9 +375,8 @@
             } catch (err) {}
         }
 
-        // --- 新增：呼出/隐藏影片简介的逻辑 ---
         function toggleInfo() {
-            if (isCardMode || currentStoryIndex === -1) return; // 只允许在 Demo 模式下生效
+            if (isCardMode || currentStoryIndex === -1) return; 
 
             isInfoVisible = !isInfoVisible;
             if (isInfoVisible) {
@@ -426,7 +421,6 @@
             if (currentStoryIndex === -1 || !stories[currentStoryIndex]) return;
             const story = stories[currentStoryIndex];
 
-            // 1. UI 更新 (Dock按钮)
             const btns = document.querySelectorAll('.card-btn');
             btns.forEach(b => b.classList.remove('active'));
             if(btns[currentStoryIndex]) btns[currentStoryIndex].classList.add('active');
@@ -434,28 +428,21 @@
             vidCont.classList.add('active');
             statusUI.classList.add('show');
 
-            // 2. 听筒显隐
             if (isCardMode) hwPanel.classList.add('visible');
             else hwPanel.classList.remove('visible');
 
-            // 3. --- 简介层逻辑 ---
-            // 每次切换视频/状态，重置并隐藏简介
             isInfoVisible = false;
             infoCard.classList.remove('show');
-            // 加载当前故事的简介图片 (如果图片找不到会隐藏，但这里我们相信有图)
             infoImg.src = story.info || ""; 
             
-            // 只有在 Demo 模式下，才激活全屏点击区
             if (!isCardMode) {
                 clickZone.style.display = 'block';
             } else {
                 clickZone.style.display = 'none';
             }
 
-            // 4. Dock 隐藏逻辑
             resetDockTimer();
 
-            // 5. 播放状态计算
             let targetSrc = "";
             let targetLoop = false;
             let targetMuted = true;
@@ -485,7 +472,6 @@
                 recBtn.classList.remove('active');
             }
 
-            // 6. 播放处理
             const currentSrcDecoded = decodeURIComponent(player.src);
             const targetSrcDecoded = targetSrc;
             
