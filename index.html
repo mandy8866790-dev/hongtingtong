@@ -127,8 +127,8 @@
             display: none; 
         }
         
-        /* 2. 简介图片容器 */
-        .info-card {
+       /* 2. 简介图片容器 */
+       .info-card {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0.95);
@@ -138,12 +138,12 @@
             transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
             
             /* --- 修改这里 --- */
-            /* background: rgba(10, 10, 10, 0.85);  <-- 删除或注释掉这一行 */
-            /* padding: 15px;                      <-- 删除或注释掉这一行 */
+            background: none;       /* 将暗色半透明背景设为无 */
+            padding: 0;             /* 将内边距设为 0，使容器紧贴图片 */
+            border: none;           /* 将边框设为无 */
             /* ---------------- */
             
             border-radius: 12px;
-            border: 1px solid var(--glass-border);
             box-shadow: 0 30px 60px rgba(0,0,0,0.8);
             /* 响应式尺寸限制 */
             max-width: 80%; max-height: 80vh;
