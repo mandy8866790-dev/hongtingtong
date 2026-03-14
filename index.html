@@ -132,12 +132,16 @@
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0.95);
-            z-index: 40; /* 确保在视频和热区之上，但不会挡住 Dock(50) */
+            z-index: 40; 
             opacity: 0;
             pointer-events: none;
             transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-            background: rgba(10, 10, 10, 0.85); /* 半透明黑底，凸显文字 */
-            padding: 15px;
+            
+            /* --- 修改这里 --- */
+            /* background: rgba(10, 10, 10, 0.85);  <-- 删除或注释掉这一行 */
+            /* padding: 15px;                      <-- 删除或注释掉这一行 */
+            /* ---------------- */
+            
             border-radius: 12px;
             border: 1px solid var(--glass-border);
             box-shadow: 0 30px 60px rgba(0,0,0,0.8);
