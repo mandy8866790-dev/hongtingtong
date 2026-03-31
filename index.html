@@ -37,7 +37,7 @@
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
-        /* --- 3. 标题层 --- */
+        /* --- 3. 待机大标题层 --- */
         .idle-layer {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%; 
@@ -59,7 +59,6 @@
             font-weight: 200; font-size: 3.5rem; letter-spacing: 0.5em;
             margin: 0; margin-left: 0.5em; 
             color: rgba(255,255,255,0.9);
-            text-shadow: 0 0 30px rgba(255,255,255,0.1);
         }
         
         .brand-subtitle {
@@ -74,6 +73,34 @@
             font-size: 0.7rem; color: rgba(255,255,255,0.3);
             letter-spacing: 2px; text-transform: uppercase;
             animation: pulse 2s infinite;
+        }
+
+        /* --- 新增：全局常驻微标 (Global Logo) --- */
+        .global-logo {
+            position: fixed; 
+            top: 35px; left: 40px; /* 位于左上角 */
+            z-index: 50; 
+            display: flex; flex-direction: column; gap: 4px;
+            pointer-events: none; /* 防止遮挡视频点击 */
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8); /* 加点阴影防止在白色画面看不清 */
+        }
+
+        .global-logo.hidden {
+            opacity: 0; 
+            transform: translateY(-15px); /* 隐藏时往上挪一点，出现时有降落感 */
+        }
+
+        .global-logo .zh {
+            font-size: 1.1rem; font-weight: 300; letter-spacing: 4px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .global-logo .en {
+            font-size: 0.6rem; font-weight: 400; letter-spacing: 2px;
+            color: var(--accent-gold); text-transform: uppercase;
         }
 
         /* --- 4. 视频容器 --- */
@@ -109,7 +136,6 @@
         }
         .status-overlay.playing .status-text { color: var(--accent-gold); }
 
-        /* --- NFC 连接状态指示灯 --- */
         .nfc-indicator {
             position: fixed; bottom: 20px; left: 20px;
             width: 10px; height: 10px; border-radius: 50%;
@@ -121,43 +147,27 @@
         /* --- 影片简介弹出层 (Info Overlay) --- */
         .click-zone {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 5; 
-            cursor: pointer;
-            display: none; 
+            z-index: 5; cursor: pointer; display: none; 
         }
         
         .info-card {
-            position: absolute;
-            top: 50%; left: 50%;
+            position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0.95);
-            z-index: 40; 
-            opacity: 0;
-            pointer-events: none;
+            z-index: 40; opacity: 0; pointer-events: none;
             transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-            
-            /* 关键修改：去除背景、内边距和最关键的盒子阴影 */
-            background: none;
-            padding: 0;
-            border: none;
-            box-shadow: none; /* 彻底移除黑色光晕/阴影 */
-            
+            background: none; padding: 0; border: none; box-shadow: none; 
             max-width: 80%; max-height: 80vh;
             display: flex; justify-content: center; align-items: center;
         }
         
         .info-card.show {
-            opacity: 1;
-            pointer-events: auto; 
-            transform: translate(-50%, -50%) scale(1);
-            cursor: pointer;
+            opacity: 1; pointer-events: auto; 
+            transform: translate(-50%, -50%) scale(1); cursor: pointer;
         }
         
         .info-card img {
             max-width: 100%; max-height: calc(80vh - 30px);
-            object-fit: contain;
-            border-radius: 16px; /* 匹配你PNG的圆角，防止硬边 */
-            display: block;
-            /* 现在的图片直接飘在视频上，原汁原味显示你的 PNG */
+            object-fit: contain; border-radius: 16px; display: block;
         }
 
         /* --- 6. 底部 Dock --- */
@@ -167,45 +177,28 @@
             background: var(--glass-bg); border: 1px solid var(--glass-border);
             border-radius: 20px; backdrop-filter: blur(20px);
             opacity: 0; transform: translateY(20px);
-            transition: all 0.8s ease;
-            pointer-events: none; 
+            transition: all 0.8s ease; pointer-events: none; 
         }
         
-        .dock-capsule.visible {
-            opacity: 1; transform: translateY(0);
-            pointer-events: auto; 
-        }
-
-        .dock-capsule.visible.dock-hidden {
-            opacity: 0; 
-            transform: translateY(20px);
-            pointer-events: none;
-        }
+        .dock-capsule.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .dock-capsule.visible.dock-hidden { opacity: 0; transform: translateY(20px); pointer-events: none; }
         
         .card-btn {
-            width: 60px; height: 90px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: #111;
+            width: 60px; height: 90px; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1); background: #111;
             cursor: pointer; transition: all 0.4s ease;
-            position: relative; overflow: hidden;
-            padding: 0;
-            pointer-events: auto;
+            position: relative; overflow: hidden; padding: 0; pointer-events: auto;
         }
         .card-btn img {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            filter: grayscale(100%) brightness(0.7);
-            transition: all 0.4s ease;
+            width: 100%; height: 100%; object-fit: cover;
+            filter: grayscale(100%) brightness(0.7); transition: all 0.4s ease;
         }
         .card-btn:hover img, .card-btn.active img {
-            filter: grayscale(0%) brightness(1);
-            transform: scale(1.05);
+            filter: grayscale(0%) brightness(1); transform: scale(1.05);
         }
         .card-btn.active {
             border-color: var(--accent-gold);
-            box-shadow: 0 0 20px rgba(229, 209, 162, 0.2);
-            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(229, 209, 162, 0.2); transform: translateY(-5px);
         }
 
         /* --- 7. 硬件模拟 (听筒) --- */
@@ -218,32 +211,30 @@
         .hw-panel.visible { opacity: 1; pointer-events: auto; }
 
         .receiver-btn {
-            width: 60px; height: 60px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            display: flex; justify-content: center; align-items: center;
-            font-size: 24px; cursor: pointer;
-            transition: all 0.3s; color: #666;
+            width: 60px; height: 60px; border-radius: 50%;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center;
+            font-size: 24px; cursor: pointer; transition: all 0.3s; color: #666;
         }
         .receiver-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
         .receiver-btn.active {
             background: var(--accent-gold); color: #000;
-            box-shadow: 0 0 20px rgba(229, 209, 162, 0.4);
-            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(229, 209, 162, 0.4); transform: scale(1.1);
         }
         .hw-label {
             writing-mode: vertical-rl; text-orientation: mixed;
-            font-size: 10px; letter-spacing: 3px;
-            color: rgba(255,255,255,0.3); text-transform: uppercase;
+            font-size: 10px; letter-spacing: 3px; color: rgba(255,255,255,0.3); text-transform: uppercase;
         }
 
+        /* --- 8. 全屏按钮 --- */
         .fs-btn {
-            position: fixed; top: 30px; left: 30px;
-            background: none; border: none; color: rgba(255,255,255,0.3);
+            /* 修改：挪到了右下角，为左上角的 Logo 腾出空间 */
+            position: fixed; bottom: 40px; right: 40px; 
+            background: none; border: none; color: rgba(255,255,255,0.2);
             font-size: 1.2rem; cursor: pointer; z-index: 110;
+            transition: color 0.3s;
         }
+        .fs-btn:hover { color: #fff; }
 
         @keyframes pulse { 0% { opacity: 0.2; } 50% { opacity: 0.6; } 100% { opacity: 0.2; } }
         @keyframes pulse-dot { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
@@ -252,13 +243,18 @@
 <body>
 
     <div class="noise"></div>
-    <button class="fs-btn" onclick="toggleFS()">⛶</button>
+    <button class="fs-btn" onclick="toggleFS()" title="全屏">⛶</button>
     <div class="nfc-indicator" id="nfc-status"></div>
 
     <div class="idle-layer" id="idle" onclick="startExperience()">
         <h1 class="brand-title">红听筒纪事</h1>
         <div class="brand-subtitle">The Red Receiver Chronicles</div>
         <div class="tap-hint">Tap Anywhere to Enter</div>
+    </div>
+
+    <div class="global-logo hidden" id="global-logo">
+        <span class="zh">红听筒纪事</span>
+        <span class="en">The Red Receiver</span>
     </div>
 
     <div class="video-container" id="vid-cont">
@@ -298,7 +294,6 @@
             "04B2260FCC2A81": 5
         };
 
-        // 包含 info 层级路径的配置
         const stories = [
             { id: 1, cover: "images/01.jpg", info: "images/info/info01.png", demo: "videos/demo/demo01.mp4", full: "videos/movie/movie 1.mp4" },
             { id: 2, cover: "images/02.jpg", info: "images/info/info02.png", demo: "videos/demo/demo02.mp4", full: "videos/movie/movie 2.mp4" },
@@ -308,7 +303,7 @@
         ];
         // ===========================================
 
-        let player, vidCont, idle, dock, recBtn, hwPanel, statusUI, statusText, nfcStatus;
+        let player, vidCont, idle, dock, recBtn, hwPanel, statusUI, statusText, nfcStatus, globalLogo;
         let clickZone, infoCard, infoImg;
         
         let currentStoryIndex = -1;
@@ -328,6 +323,7 @@
             statusUI = document.getElementById('status-ui');
             statusText = document.getElementById('status-text');
             nfcStatus = document.getElementById('nfc-status');
+            globalLogo = document.getElementById('global-logo'); // 获取新加的全局 Logo
             
             clickZone = document.getElementById('click-zone');
             infoCard = document.getElementById('info-card');
@@ -357,6 +353,10 @@
             
             idle.classList.add('hidden');
             dock.classList.add('visible');
+            
+            // 触发：显示左上角全局 Logo
+            globalLogo.classList.remove('hidden');
+
             manualSelect(0);
         }
 
