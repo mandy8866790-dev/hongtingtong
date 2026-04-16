@@ -164,10 +164,9 @@
         .fs-btn:hover { color: #fff; }
 
         /* ========================================= */
-        /* --- 8. 新增：右侧作者书签与侧边栏抽屉 --- */
+        /* --- 8. 右侧作者书签与侧边栏抽屉 --- */
         /* ========================================= */
         
-        /* 贴边小书签按钮 */
         .bookmark-trigger {
             position: fixed; top: 40%; right: 0; transform: translateY(-50%);
             background: rgba(20, 20, 20, 0.6); border: 1px solid var(--glass-border); border-right: none;
@@ -177,15 +176,12 @@
             z-index: 120; opacity: 0; pointer-events: none;
             transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        /* 入场后显示 */
         .bookmark-trigger.visible { opacity: 1; pointer-events: auto; }
-        /* 鼠标悬浮时微微探出并高亮 */
         .bookmark-trigger:hover {
             color: var(--accent-gold); background: rgba(30, 30, 30, 0.8);
             padding-right: 12px; box-shadow: -5px 0 15px rgba(0,0,0,0.5);
         }
 
-        /* 背景遮罩层，点击关闭侧边栏 */
         .sidebar-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
@@ -193,9 +189,8 @@
         }
         .sidebar-overlay.show { opacity: 1; pointer-events: auto; }
 
-        /* 侧边栏抽屉容器 */
         .author-sidebar {
-            position: fixed; top: 0; right: 0; width: 420px; max-width: 85vw; height: 100vh;
+            position: fixed; top: 0; right: 0; width: 440px; max-width: 85vw; height: 100vh;
             background: rgba(12, 12, 12, 0.85); backdrop-filter: blur(30px);
             border-left: 1px solid rgba(255, 255, 255, 0.08);
             z-index: 210; padding: 60px 40px; overflow-y: auto; box-sizing: border-box;
@@ -204,7 +199,6 @@
         }
         .author-sidebar.show { transform: translateX(0); }
 
-        /* 侧边栏关闭按钮 */
         .sidebar-close {
             position: absolute; top: 30px; right: 30px;
             background: none; border: none; color: rgba(255,255,255,0.4);
@@ -212,24 +206,30 @@
         }
         .sidebar-close:hover { color: #fff; transform: scale(1.1); }
 
-        /* 侧边栏排版系统 */
+        /* 侧边栏排版系统 (新增中英文层级控制) */
         .sidebar-header { margin-bottom: 40px; }
         .sidebar-title { font-weight: 300; font-size: 1.8rem; margin: 0 0 10px 0; color: #fff; letter-spacing: 2px; }
         .sidebar-subtitle { font-size: 0.8rem; color: var(--accent-gold); letter-spacing: 2px; text-transform: uppercase; }
         
         .sidebar-content { display: flex; flex-direction: column; gap: 35px; }
         .sidebar-section h3 { 
-            font-size: 1rem; font-weight: 500; color: #fff; margin: 0 0 12px 0; 
-            display: flex; align-items: center; gap: 8px; opacity: 0.9;
+            font-size: 1.05rem; font-weight: 500; color: #fff; margin: 0 0 12px 0; 
+            display: flex; align-items: baseline; opacity: 0.9;
         }
         .sidebar-section h3::before {
-            content: ''; display: inline-block; width: 4px; height: 14px; background: var(--accent-gold); border-radius: 2px;
+            content: ''; display: inline-block; width: 4px; height: 14px; background: var(--accent-gold); border-radius: 2px; margin-right: 8px; position: relative; top: 1px;
+        }
+        .sidebar-section h3 .en-title {
+            font-size: 0.7rem; color: var(--accent-gold); margin-left: 10px; font-weight: 400; text-transform: uppercase; letter-spacing: 1px;
         }
         .sidebar-section p { 
-            font-size: 0.9rem; line-height: 1.8; color: rgba(255,255,255,0.6); 
+            font-size: 0.9rem; line-height: 1.8; color: rgba(255,255,255,0.7); 
             margin: 0; text-align: justify; font-weight: 300;
         }
-        /* 自定义滚动条 */
+        .sidebar-section p.en-text {
+            font-size: 0.75rem; color: rgba(255, 255, 255, 0.35); margin-top: 8px; line-height: 1.6; font-family: 'Inter', sans-serif; text-align: left;
+        }
+
         .author-sidebar::-webkit-scrollbar { width: 6px; }
         .author-sidebar::-webkit-scrollbar-track { background: transparent; }
         .author-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
@@ -271,31 +271,27 @@
 
         <div class="sidebar-content">
             <div class="sidebar-section">
-                <h3>作者介绍</h3>
-                <p>
-                    您好，我是本装置的创作者。我致力于探索物理交互与数字媒介之间的边界。在这个充斥着快速滑动和碎片化信息的时代，我希望通过实体硬件与视觉影像的结合，创造一种具有“仪式感”的私人叙事空间。
-                </p>
+                <h3>作者介绍 <span class="en-title">About the Creator</span></h3>
+                <p>您好，我是本装置的创作者。我致力于探索物理交互与数字媒介之间的边界。在这个充斥着快速滑动和碎片化信息的时代，我希望通过实体硬件与视觉影像的结合，创造一种具有“仪式感”的私人叙事空间。</p>
+                <p class="en-text">Hello, I am the creator of this installation. I am dedicated to exploring the boundaries between physical interaction and digital media. In an era flooded with rapid scrolling and fragmented information, I hope to create a private narrative space with a sense of "ritual" by combining physical hardware and visual imagery.</p>
             </div>
 
             <div class="sidebar-section">
-                <h3>档案碎片：为什么是这五张卡片？</h3>
-                <p>
-                    这五个短片并非随机组合，而是代表了五种潜藏在我们记忆深处的情感切片。从校园深海里的压抑与救赎（《电话卡》），到赛博未来中对旧时光的依恋（《游戏卡》）。每一张实体卡片，都像是通往某段封存记忆的物理钥匙，等待着被唤醒。
-                </p>
+                <h3>档案碎片 <span class="en-title">Archive Fragments</span></h3>
+                <p>这五个短片并非随机组合，而是代表了五种潜藏在我们记忆深处的情感切片。从校园深海里的压抑与救赎（《电话卡》），到赛博未来中对旧时光的依恋（《游戏卡》）。每一张实体卡片，都像是通往某段封存记忆的物理钥匙，等待着被唤醒。</p>
+                <p class="en-text">These five short films are not a random combination; they represent five slices of emotion hidden deep within our memories. From the suppression and redemption in the deep sea of a high school campus ("Phone Card"), to the attachment to old times in a cyberpunk future ("Game Card"). Each physical card acts as a physical key to a sealed memory, waiting to be awakened.</p>
             </div>
 
             <div class="sidebar-section">
-                <h3>听筒的隐喻与情感共鸣</h3>
-                <p>
-                    “红听筒”是本作的核心隐喻。屏幕上的画面永远是静音循环的，就像生活中那些冷冰冰的旁观视角。只有当您亲自拿起听筒，建立起物理连接的那一刻，声音才会流入耳中。我想表达的，正是这种对“真实连接”的渴望——在这个喧嚣的世界里，有些故事只能被靠近、被倾听。
-                </p>
+                <h3>听筒的隐喻 <span class="en-title">The Metaphor</span></h3>
+                <p>“红听筒”是本作的核心隐喻。屏幕上的画面永远是静音循环的，就像生活中那些冷冰冰的旁观视角。只有当您亲自拿起听筒，建立起物理连接的那一刻，声音才会流入耳中。我想表达的，正是这种对“真实连接”的渴望——在这个喧嚣的世界里，有些故事只能被靠近、被倾听。</p>
+                <p class="en-text">The "Red Receiver" is the core metaphor of this work. The images on the screen are always looping in silence, much like the cold, bystander perspectives in life. Only when you personally pick up the receiver and establish a physical connection will the sound flow into your ears. What I want to express is this very longing for "authentic connection"—in this noisy world, some stories can only be approached and listened to.</p>
             </div>
 
             <div class="sidebar-section">
-                <h3>给您的寄语</h3>
-                <p>
-                    当您握住听筒的那一刻，希望您能感受到物理触感带来的心跳。请允许自己在这短暂的几分钟里，隔绝周遭的杂音，沉浸在这些影像与原声中。愿您在这里，能找到属于您自己的共鸣与平静。
-                </p>
+                <h3>寄语 <span class="en-title">Message to You</span></h3>
+                <p>当您握住听筒的那一刻，希望您能感受到物理触感带来的心跳。请允许自己在这短暂的几分钟里，隔绝周遭的杂音，沉浸在这些影像与原声中。愿您在这里，能找到属于您自己的共鸣与平静。</p>
+                <p class="en-text">The moment you hold the receiver, I hope you can feel the heartbeat brought by the physical touch. Please allow yourself, in these brief few minutes, to isolate the surrounding noise and immerse yourself in these images and original sounds. May you find your own resonance and peace here.</p>
             </div>
         </div>
     </div>
@@ -371,7 +367,6 @@
             infoCard = document.getElementById('info-card');
             infoImg = document.getElementById('info-img');
 
-            // 侧边栏元素
             bookmarkTrigger = document.getElementById('bookmark-trigger');
             sidebarOverlay = document.getElementById('sidebar-overlay');
             authorSidebar = document.getElementById('author-sidebar');
@@ -379,7 +374,6 @@
             initDock();
             connectWebSocket();
 
-            // 鼠标移动隐藏逻辑
             document.addEventListener('mousemove', (e) => {
                 if (!hasStarted || !isCardMode) return;
                 
@@ -401,20 +395,16 @@
             idle.classList.add('hidden');
             dock.classList.add('visible');
             
-            // 显示左上角全局 Logo 和右侧书签
             globalLogo.classList.remove('hidden');
             bookmarkTrigger.classList.add('visible');
 
             manualSelect(0);
         }
 
-        // --- 新增：开关侧边栏逻辑 ---
         function toggleSidebar() {
-            // 开关切换
             sidebarOverlay.classList.toggle('show');
             authorSidebar.classList.toggle('show');
             
-            // 如果侧边栏打开，就暂停视频，关闭时恢复播放
             if (authorSidebar.classList.contains('show')) {
                 player.pause();
             } else {
@@ -507,7 +497,7 @@
 
             let targetSrc = "";
             let targetLoop = false;
-            let targetMuted = false; // 修改：Demo 默认有声
+            let targetMuted = false; 
             let targetStatusText = "";
             let isPlayingMode = false;
 
@@ -528,7 +518,7 @@
             } else {
                 targetSrc = story.demo;
                 targetLoop = true;
-                targetMuted = false; // 修改：Demo 模式开启声音
+                targetMuted = false; 
                 targetStatusText = "Preview Mode";
                 isPlayingMode = false;
                 recBtn.classList.remove('active');
