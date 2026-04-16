@@ -12,8 +12,8 @@
     <style>
         /* --- 1. 设计系统 --- */
         :root {
-            --bg-deep: #040000;
-            --accent-gold: #e28100;
+            --bg-deep: #050505;
+            --accent-gold: #E5D1A2;
             --font-main: 'Inter', system-ui, sans-serif;
             --glass-bg: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
@@ -39,26 +39,17 @@
 
         /* --- 3. 待机大标题层 --- */
         .idle-layer {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%; 
-            z-index: 100; 
-            display: flex; flex-direction: column;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: 100; display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             background: rgba(5,5,5,0.8); 
-            transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-            cursor: pointer; 
+            transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); cursor: pointer; 
         }
-        
-        .idle-layer.hidden {
-            opacity: 0; 
-            pointer-events: none; 
-            transform: scale(1.05);
-        }
+        .idle-layer.hidden { opacity: 0; pointer-events: none; transform: scale(1.05); }
 
         .brand-title {
             font-weight: 200; font-size: 3.5rem; letter-spacing: 0.5em;
-            margin: 0; margin-left: 0.5em; 
-            color: rgba(255,255,255,0.9);
+            margin: 0; margin-left: 0.5em; color: rgba(255,255,255,0.9);
         }
         
         .brand-subtitle {
@@ -69,56 +60,35 @@
         }
         
         .tap-hint {
-            position: absolute; bottom: 50px;
-            font-size: 0.7rem; color: rgba(255,255,255,0.3);
-            letter-spacing: 2px; text-transform: uppercase;
-            animation: pulse 2s infinite;
+            position: absolute; bottom: 50px; font-size: 0.7rem; color: rgba(255,255,255,0.3);
+            letter-spacing: 2px; text-transform: uppercase; animation: pulse 2s infinite;
         }
 
-        /* --- 新增：全局常驻微标 (Global Logo) --- */
+        /* --- 全局常驻微标 (Global Logo) --- */
         .global-logo {
-            position: fixed; 
-            top: 35px; left: 40px; /* 位于左上角 */
-            z-index: 50; 
-            display: flex; flex-direction: column; gap: 4px;
-            pointer-events: none; /* 防止遮挡视频点击 */
-            opacity: 1;
-            transform: translateY(0);
+            position: fixed; top: 35px; left: 40px; z-index: 50; 
+            display: flex; flex-direction: column; gap: 4px; pointer-events: none; 
+            opacity: 1; transform: translateY(0);
             transition: all 1s cubic-bezier(0.2, 0.8, 0.2, 1);
-            text-shadow: 0 2px 10px rgba(0,0,0,0.8); /* 加点阴影防止在白色画面看不清 */
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8); 
         }
+        .global-logo.hidden { opacity: 0; transform: translateY(-15px); }
 
-        .global-logo.hidden {
-            opacity: 0; 
-            transform: translateY(-15px); /* 隐藏时往上挪一点，出现时有降落感 */
-        }
-
-        .global-logo .zh {
-            font-size: 1.1rem; font-weight: 300; letter-spacing: 4px;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .global-logo .en {
-            font-size: 0.6rem; font-weight: 400; letter-spacing: 2px;
-            color: var(--accent-gold); text-transform: uppercase;
-        }
+        .global-logo .zh { font-size: 1.1rem; font-weight: 300; letter-spacing: 4px; color: rgba(255, 255, 255, 0.8); }
+        .global-logo .en { font-size: 0.6rem; font-weight: 400; letter-spacing: 2px; color: var(--accent-gold); text-transform: uppercase; }
 
         /* --- 4. 视频容器 --- */
         .video-container {
-            width: 100%; height: 100%;
-            position: absolute; top: 0; left: 0;
-            z-index: 2; opacity: 0; transition: opacity 1s ease;
-            background: #000;
+            width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+            z-index: 2; opacity: 0; transition: opacity 1s ease; background: #000;
         }
         .video-container.active { opacity: 1; }
         video { width: 100%; height: 100%; object-fit: cover; }
 
         /* --- 5. 状态提示层 --- */
         .status-overlay {
-            position: absolute; top: 20px; right: 30px;
-            z-index: 10;
-            display: flex; align-items: center; gap: 10px;
-            opacity: 0; transition: opacity 0.5s;
+            position: absolute; top: 20px; right: 30px; z-index: 10;
+            display: flex; align-items: center; gap: 10px; opacity: 0; transition: opacity 0.5s;
         }
         .status-overlay.show { opacity: 1; }
         .status-dot {
@@ -126,85 +96,53 @@
             background-color: #555; box-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
         .status-text {
-            font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase;
-            color: rgba(255,255,255,0.6);
+            font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.6);
         }
         .status-overlay.playing .status-dot {
-            background-color: var(--accent-gold);
-            box-shadow: 0 0 10px var(--accent-gold);
-            animation: pulse-dot 2s infinite;
+            background-color: var(--accent-gold); box-shadow: 0 0 10px var(--accent-gold); animation: pulse-dot 2s infinite;
         }
         .status-overlay.playing .status-text { color: var(--accent-gold); }
 
         .nfc-indicator {
-            position: fixed; bottom: 20px; left: 20px;
-            width: 10px; height: 10px; border-radius: 50%;
-            background: #333; z-index: 100;
-            transition: background 0.3s;
+            position: fixed; bottom: 20px; left: 20px; width: 10px; height: 10px; border-radius: 50%;
+            background: #333; z-index: 100; transition: background 0.3s;
         }
         .nfc-indicator.connected { background: #2ecc71; box-shadow: 0 0 10px #2ecc71; }
 
         /* --- 影片简介弹出层 (Info Overlay) --- */
-        .click-zone {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 5; cursor: pointer; display: none; 
-        }
-        
+        .click-zone { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; cursor: pointer; display: none; }
         .info-card {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(0.95);
-            z-index: 40; opacity: 0; pointer-events: none;
-            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95);
+            z-index: 40; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
             background: none; padding: 0; border: none; box-shadow: none; 
-            max-width: 80%; max-height: 80vh;
-            display: flex; justify-content: center; align-items: center;
+            max-width: 80%; max-height: 80vh; display: flex; justify-content: center; align-items: center;
         }
-        
-        .info-card.show {
-            opacity: 1; pointer-events: auto; 
-            transform: translate(-50%, -50%) scale(1); cursor: pointer;
-        }
-        
-        .info-card img {
-            max-width: 100%; max-height: calc(80vh - 30px);
-            object-fit: contain; border-radius: 16px; display: block;
-        }
+        .info-card.show { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); cursor: pointer; }
+        .info-card img { max-width: 100%; max-height: calc(80vh - 30px); object-fit: contain; border-radius: 16px; display: block; }
 
         /* --- 6. 底部 Dock --- */
         .dock-capsule {
-            position: fixed; bottom: 40px; z-index: 50;
-            display: flex; gap: 12px; padding: 12px;
+            position: fixed; bottom: 40px; z-index: 50; display: flex; gap: 12px; padding: 12px;
             background: var(--glass-bg); border: 1px solid var(--glass-border);
             border-radius: 20px; backdrop-filter: blur(20px);
-            opacity: 0; transform: translateY(20px);
-            transition: all 0.8s ease; pointer-events: none; 
+            opacity: 0; transform: translateY(20px); transition: all 0.8s ease; pointer-events: none; 
         }
-        
         .dock-capsule.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
         .dock-capsule.visible.dock-hidden { opacity: 0; transform: translateY(20px); pointer-events: none; }
         
         .card-btn {
-            width: 60px; height: 90px; border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.1); background: #111;
-            cursor: pointer; transition: all 0.4s ease;
-            position: relative; overflow: hidden; padding: 0; pointer-events: auto;
+            width: 60px; height: 90px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: #111;
+            cursor: pointer; transition: all 0.4s ease; position: relative; overflow: hidden; padding: 0; pointer-events: auto;
         }
         .card-btn img {
-            width: 100%; height: 100%; object-fit: cover;
-            filter: grayscale(100%) brightness(0.7); transition: all 0.4s ease;
+            width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%) brightness(0.7); transition: all 0.4s ease;
         }
-        .card-btn:hover img, .card-btn.active img {
-            filter: grayscale(0%) brightness(1); transform: scale(1.05);
-        }
-        .card-btn.active {
-            border-color: var(--accent-gold);
-            box-shadow: 0 0 20px rgba(229, 209, 162, 0.2); transform: translateY(-5px);
-        }
+        .card-btn:hover img, .card-btn.active img { filter: grayscale(0%) brightness(1); transform: scale(1.05); }
+        .card-btn.active { border-color: var(--accent-gold); box-shadow: 0 0 20px rgba(229, 209, 162, 0.2); transform: translateY(-5px); }
 
         /* --- 7. 硬件模拟 (听筒) --- */
         .hw-panel {
-            position: fixed; right: 40px; top: 50%;
-            transform: translateY(-50%); z-index: 60;
+            position: fixed; right: 40px; top: 50%; transform: translateY(-50%); z-index: 60;
             display: flex; flex-direction: column; align-items: center; gap: 20px;
             opacity: 0; pointer-events: none; transition: opacity 0.6s ease;
         }
@@ -218,23 +156,84 @@
         }
         .receiver-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
         .receiver-btn.active {
-            background: var(--accent-gold); color: #000;
-            box-shadow: 0 0 20px rgba(229, 209, 162, 0.4); transform: scale(1.1);
+            background: var(--accent-gold); color: #000; box-shadow: 0 0 20px rgba(229, 209, 162, 0.4); transform: scale(1.1);
         }
-        .hw-label {
-            writing-mode: vertical-rl; text-orientation: mixed;
-            font-size: 10px; letter-spacing: 3px; color: rgba(255,255,255,0.3); text-transform: uppercase;
+        .hw-label { writing-mode: vertical-rl; text-orientation: mixed; font-size: 10px; letter-spacing: 3px; color: rgba(255,255,255,0.3); text-transform: uppercase; }
+
+        .fs-btn { position: fixed; bottom: 40px; right: 40px; background: none; border: none; color: rgba(255,255,255,0.2); font-size: 1.2rem; cursor: pointer; z-index: 110; transition: color 0.3s; }
+        .fs-btn:hover { color: #fff; }
+
+        /* ========================================= */
+        /* --- 8. 新增：右侧作者书签与侧边栏抽屉 --- */
+        /* ========================================= */
+        
+        /* 贴边小书签按钮 */
+        .bookmark-trigger {
+            position: fixed; top: 40%; right: 0; transform: translateY(-50%);
+            background: rgba(20, 20, 20, 0.6); border: 1px solid var(--glass-border); border-right: none;
+            padding: 20px 6px; border-radius: 8px 0 0 8px; backdrop-filter: blur(10px);
+            color: rgba(255, 255, 255, 0.4); font-size: 0.75rem; letter-spacing: 4px;
+            writing-mode: vertical-rl; text-orientation: mixed; cursor: pointer; 
+            z-index: 120; opacity: 0; pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        /* 入场后显示 */
+        .bookmark-trigger.visible { opacity: 1; pointer-events: auto; }
+        /* 鼠标悬浮时微微探出并高亮 */
+        .bookmark-trigger:hover {
+            color: var(--accent-gold); background: rgba(30, 30, 30, 0.8);
+            padding-right: 12px; box-shadow: -5px 0 15px rgba(0,0,0,0.5);
         }
 
-        /* --- 8. 全屏按钮 --- */
-        .fs-btn {
-            /* 修改：挪到了右下角，为左上角的 Logo 腾出空间 */
-            position: fixed; bottom: 40px; right: 40px; 
-            background: none; border: none; color: rgba(255,255,255,0.2);
-            font-size: 1.2rem; cursor: pointer; z-index: 110;
-            transition: color 0.3s;
+        /* 背景遮罩层，点击关闭侧边栏 */
+        .sidebar-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+            z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
         }
-        .fs-btn:hover { color: #fff; }
+        .sidebar-overlay.show { opacity: 1; pointer-events: auto; }
+
+        /* 侧边栏抽屉容器 */
+        .author-sidebar {
+            position: fixed; top: 0; right: 0; width: 420px; max-width: 85vw; height: 100vh;
+            background: rgba(12, 12, 12, 0.85); backdrop-filter: blur(30px);
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 210; padding: 60px 40px; overflow-y: auto; box-sizing: border-box;
+            transform: translateX(100%); transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: -20px 0 60px rgba(0,0,0,0.8);
+        }
+        .author-sidebar.show { transform: translateX(0); }
+
+        /* 侧边栏关闭按钮 */
+        .sidebar-close {
+            position: absolute; top: 30px; right: 30px;
+            background: none; border: none; color: rgba(255,255,255,0.4);
+            font-size: 1.5rem; cursor: pointer; transition: color 0.3s;
+        }
+        .sidebar-close:hover { color: #fff; transform: scale(1.1); }
+
+        /* 侧边栏排版系统 */
+        .sidebar-header { margin-bottom: 40px; }
+        .sidebar-title { font-weight: 300; font-size: 1.8rem; margin: 0 0 10px 0; color: #fff; letter-spacing: 2px; }
+        .sidebar-subtitle { font-size: 0.8rem; color: var(--accent-gold); letter-spacing: 2px; text-transform: uppercase; }
+        
+        .sidebar-content { display: flex; flex-direction: column; gap: 35px; }
+        .sidebar-section h3 { 
+            font-size: 1rem; font-weight: 500; color: #fff; margin: 0 0 12px 0; 
+            display: flex; align-items: center; gap: 8px; opacity: 0.9;
+        }
+        .sidebar-section h3::before {
+            content: ''; display: inline-block; width: 4px; height: 14px; background: var(--accent-gold); border-radius: 2px;
+        }
+        .sidebar-section p { 
+            font-size: 0.9rem; line-height: 1.8; color: rgba(255,255,255,0.6); 
+            margin: 0; text-align: justify; font-weight: 300;
+        }
+        /* 自定义滚动条 */
+        .author-sidebar::-webkit-scrollbar { width: 6px; }
+        .author-sidebar::-webkit-scrollbar-track { background: transparent; }
+        .author-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .author-sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
         @keyframes pulse { 0% { opacity: 0.2; } 50% { opacity: 0.6; } 100% { opacity: 0.2; } }
         @keyframes pulse-dot { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
@@ -257,6 +256,49 @@
         <span class="en">The Red Receiver</span>
     </div>
 
+    <div class="bookmark-trigger" id="bookmark-trigger" onclick="toggleSidebar()">
+        ABOUT
+    </div>
+
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div class="author-sidebar" id="author-sidebar">
+        <button class="sidebar-close" onclick="toggleSidebar()">×</button>
+        
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">创作手记</h2>
+            <div class="sidebar-subtitle">Author's Note</div>
+        </div>
+
+        <div class="sidebar-content">
+            <div class="sidebar-section">
+                <h3>作者介绍</h3>
+                <p>
+                    您好，我是本装置的创作者。我致力于探索物理交互与数字媒介之间的边界。在这个充斥着快速滑动和碎片化信息的时代，我希望通过实体硬件与视觉影像的结合，创造一种具有“仪式感”的私人叙事空间。
+                </p>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>档案碎片：为什么是这五张卡片？</h3>
+                <p>
+                    这五个短片并非随机组合，而是代表了五种潜藏在我们记忆深处的情感切片。从校园深海里的压抑与救赎（《电话卡》），到赛博未来中对旧时光的依恋（《游戏卡》）。每一张实体卡片，都像是通往某段封存记忆的物理钥匙，等待着被唤醒。
+                </p>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>听筒的隐喻与情感共鸣</h3>
+                <p>
+                    “红听筒”是本作的核心隐喻。屏幕上的画面永远是静音循环的，就像生活中那些冷冰冰的旁观视角。只有当您亲自拿起听筒，建立起物理连接的那一刻，声音才会流入耳中。我想表达的，正是这种对“真实连接”的渴望——在这个喧嚣的世界里，有些故事只能被靠近、被倾听。
+                </p>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>给您的寄语</h3>
+                <p>
+                    当您握住听筒的那一刻，希望您能感受到物理触感带来的心跳。请允许自己在这短暂的几分钟里，隔绝周遭的杂音，沉浸在这些影像与原声中。愿您在这里，能找到属于您自己的共鸣与平静。
+                </p>
+            </div>
+        </div>
+    </div>
     <div class="video-container" id="vid-cont">
         <video id="player" playsinline>
             <source src="" type="video/mp4">
@@ -304,7 +346,7 @@
         // ===========================================
 
         let player, vidCont, idle, dock, recBtn, hwPanel, statusUI, statusText, nfcStatus, globalLogo;
-        let clickZone, infoCard, infoImg;
+        let clickZone, infoCard, infoImg, bookmarkTrigger, sidebarOverlay, authorSidebar;
         
         let currentStoryIndex = -1;
         let isCardMode = false;
@@ -323,11 +365,16 @@
             statusUI = document.getElementById('status-ui');
             statusText = document.getElementById('status-text');
             nfcStatus = document.getElementById('nfc-status');
-            globalLogo = document.getElementById('global-logo'); // 获取新加的全局 Logo
+            globalLogo = document.getElementById('global-logo'); 
             
             clickZone = document.getElementById('click-zone');
             infoCard = document.getElementById('info-card');
             infoImg = document.getElementById('info-img');
+
+            // 侧边栏元素
+            bookmarkTrigger = document.getElementById('bookmark-trigger');
+            sidebarOverlay = document.getElementById('sidebar-overlay');
+            authorSidebar = document.getElementById('author-sidebar');
 
             initDock();
             connectWebSocket();
@@ -354,10 +401,25 @@
             idle.classList.add('hidden');
             dock.classList.add('visible');
             
-            // 触发：显示左上角全局 Logo
+            // 显示左上角全局 Logo 和右侧书签
             globalLogo.classList.remove('hidden');
+            bookmarkTrigger.classList.add('visible');
 
             manualSelect(0);
+        }
+
+        // --- 新增：开关侧边栏逻辑 ---
+        function toggleSidebar() {
+            // 开关切换
+            sidebarOverlay.classList.toggle('show');
+            authorSidebar.classList.toggle('show');
+            
+            // 如果侧边栏打开，就暂停视频，关闭时恢复播放
+            if (authorSidebar.classList.contains('show')) {
+                player.pause();
+            } else {
+                player.play().catch(e => {});
+            }
         }
 
         function connectWebSocket() {
@@ -445,7 +507,7 @@
 
             let targetSrc = "";
             let targetLoop = false;
-            let targetMuted = true;
+            let targetMuted = false; // 修改：Demo 默认有声
             let targetStatusText = "";
             let isPlayingMode = false;
 
@@ -466,7 +528,7 @@
             } else {
                 targetSrc = story.demo;
                 targetLoop = true;
-                targetMuted = false;
+                targetMuted = false; // 修改：Demo 模式开启声音
                 targetStatusText = "Preview Mode";
                 isPlayingMode = false;
                 recBtn.classList.remove('active');
